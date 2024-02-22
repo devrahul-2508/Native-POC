@@ -109,17 +109,10 @@ class BluetoothScanner(
         Log.d("BAM", result.toString())
 
         // Delay execution using Handler
-        Handler(Looper.getMainLooper()).postDelayed({
-            // Your code to be executed after the delay
-            // This block will be executed after 300 milliseconds
-            // It will run on the main thread
-            // For example:
-            // doSomethingAfterDelay()
-        }, 300L)
     }
 
 
     companion object {
-        private const val SCAN_PERIOD: Long = 10000 // Scan for 10 seconds
+        private const val SCAN_PERIOD: Long = 60000 // Scan for 10 seconds
     }
 }

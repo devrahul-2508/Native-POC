@@ -22,6 +22,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.nativepoc.constants.Constants
 import java.util.UUID
 
 
@@ -113,7 +114,7 @@ class BLEActivity : AppCompatActivity() {
                         Log.d(TAG, "Service Name Found: " + gattService.uuid.toString())
                     }
 
-                    val service = gatt.getService(SENSOR_SERVICE_UUID)
+                    val service = gatt.getService(Constants.SENSOR_SERVICE_UUID)
                     Log.d("BAM SERVICE", service.toString())
 
                     for (gattCharacteristic in service.characteristics) {
@@ -125,20 +126,26 @@ class BLEActivity : AppCompatActivity() {
 
 
                     }
-                    val characteristic = service?.getCharacteristic(SENSOR_CHARACTERISTIC_UUID)
+                    val characteristic =
+                        service?.getCharacteristic(Constants.MPU_ACCELEROMETER_UUID)
                     characteristic?.let {
                         val data = "qwerty12"
 
+
+                        // For App Connect
                         bluetoothScanner?.writeCharacteristic(
-                            DIAGNOSTIC_SERVICE_UUID,
-                            APPCONNECT_CHARACTERISTIC_UUID, data.toByteArray(Charsets.UTF_8)
+                            Constants.DIAGNOSTIC_SERVICE_UUID,
+                            Constants.APP_CONNECT_UUID,
+                            data.toByteArray(Charsets.UTF_8)
                         )
 
+                        //Wait for App-Connect to be successful and then listen on data
                         Handler(Looper.getMainLooper()).postDelayed({
                             bluetoothScanner?.enableCharacteristicNotification(
-                                SENSOR_SERVICE_UUID,
-                                SENSOR_CHARACTERISTIC_UUID,
-                                DESCRIPTOR_UUID
+                                Constants
+                                    .SENSOR_SERVICE_UUID,
+                                Constants.MPU_ACCELEROMETER_UUID,
+                                Constants.DESCRIPTOR_UUID
                             )
                         }, 300L)
 
@@ -161,7 +168,7 @@ class BLEActivity : AppCompatActivity() {
                 status: Int
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    if (characteristic.uuid == SENSOR_CHARACTERISTIC_UUID) {
+                    if (characteristic.uuid == Constants.MPU_ACCELEROMETER_UUID) {
                         // Handle characteristic read
                         val value = characteristic.value
                         // Process the value as needed
@@ -188,31 +195,12 @@ class BLEActivity : AppCompatActivity() {
                 }
             }
 
-//            override fun onCharacteristicChanged(
-//                gatt: BluetoothGatt,
-//                characteristic: BluetoothGattCharacteristic,
-//                value: ByteArray
-//            ) {
-//                Log.d("BAM System Flag Values", "Inside")
-//                if (CHARACTERISTIC_UUID == characteristic.uuid) {
-//                    // Retrieve the new value of the characteristic
-//                    val newValue = characteristic.value
-//
-//                    Log.d("BAM System Flag Values", newValue.contentToString())
-//
-//                    // Process the new value as needed
-//                }
-//            }
-
-            @Deprecated("Deprecated in Java")
             override fun onCharacteristicChanged(
                 gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic
+                characteristic: BluetoothGattCharacteristic,
+                value: ByteArray
             ) {
-                super.onCharacteristicChanged(gatt, characteristic)
-
-                Log.d("BAM System Flag Values", "Inside")
-                if (SENSOR_CHARACTERISTIC_UUID == characteristic.uuid) {
+                if (Constants.MPU_ACCELEROMETER_UUID == characteristic.uuid) {
                     // Retrieve the new value of the characteristic
                     val newValue = characteristic.value
 
@@ -280,19 +268,6 @@ class BLEActivity : AppCompatActivity() {
 
         private const val TAG = "BAM"
 
-        private val SENSOR_SERVICE_UUID = UUID.fromString("0000a000-0000-1000-8000-00805f9b34fb")
-
-        private val SENSOR_CHARACTERISTIC_UUID =
-            UUID.fromString("0000a001-0000-1000-8000-00805f9b34fb")
-
-        private val DIAGNOSTIC_SERVICE_UUID =
-            UUID.fromString("0000ff00-0000-1000-8000-00805f9b34fb")
-
-        private val APPCONNECT_CHARACTERISTIC_UUID =
-            UUID.fromString("0000ff03-0000-1000-8000-00805f9b34fb")
-
-
-        private val DESCRIPTOR_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
     }
 }
