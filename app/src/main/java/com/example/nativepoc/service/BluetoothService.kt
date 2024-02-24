@@ -1,9 +1,7 @@
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
@@ -13,11 +11,9 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import kotlinx.coroutines.delay
 import java.util.UUID
-import kotlin.math.sign
 
-class BluetoothScanner(
+class BluetoothService(
     private val context: Context,
     private val scanCallback: ScanCallback,
     private val gattCallback: BluetoothGattCallback
@@ -39,7 +35,7 @@ class BluetoothScanner(
             .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
             .build()
 
-        Log.d("BAM","Starting Scan")
+        Log.d("BAM", "Starting Scan")
 
         bluetoothLeScanner = bluetoothAdapter?.bluetoothLeScanner
         bluetoothLeScanner?.startScan(null, scanSettings, scanCallback)
@@ -77,18 +73,18 @@ class BluetoothScanner(
     }
 
     @SuppressLint("MissingPermission")
-    fun readCharacteristic(serviceUuid: UUID, characteristicUuid: UUID) {
+    fun readCharacteristic(serviceUuid: UUID, characteristicUuid: UUID):Boolean {
         val service = bluetoothGatt?.getService(serviceUuid)
         val characteristic = service?.getCharacteristic(characteristicUuid)
-        bluetoothGatt?.readCharacteristic(characteristic)
+        return bluetoothGatt!!.readCharacteristic(characteristic)
     }
 
     @SuppressLint("MissingPermission")
-    fun writeCharacteristic(serviceUuid: UUID, characteristicUuid: UUID, data: ByteArray) {
+    fun writeCharacteristic(serviceUuid: UUID, characteristicUuid: UUID, data: ByteArray):Boolean {
         val service = bluetoothGatt?.getService(serviceUuid)
         val characteristic = service?.getCharacteristic(characteristicUuid)
         characteristic?.value = data
-        bluetoothGatt?.writeCharacteristic(characteristic)
+       return bluetoothGatt!!.writeCharacteristic(characteristic)
     }
 
     @SuppressLint("MissingPermission")
@@ -96,17 +92,13 @@ class BluetoothScanner(
         serviceUuid: UUID,
         characteristicUuid: UUID,
         descriptorUuid: UUID
-    ) {
+    ):Boolean {
         val service = bluetoothGatt?.getService(serviceUuid)
-
-
         val characteristic = service?.getCharacteristic(characteristicUuid)
         bluetoothGatt?.setCharacteristicNotification(characteristic, true)
-
         val descriptor = characteristic?.getDescriptor(descriptorUuid)
         descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        val result = bluetoothGatt?.writeDescriptor(descriptor)
-        Log.d("BAM", result.toString())
+        return bluetoothGatt!!.writeDescriptor(descriptor)
 
         // Delay execution using Handler
     }

@@ -15,6 +15,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
+import com.example.nativepoc.ui.BLEActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
@@ -95,7 +96,7 @@ class MainActivity : AppCompatActivity(),SensorEventListener {
         }
 
         bleButton.setOnClickListener {
-            startActivity(Intent(this,BLEActivity::class.java))
+            startActivity(Intent(this, BLEActivity::class.java))
         }
 
       //  createSensorDataFolder()
@@ -139,7 +140,8 @@ class MainActivity : AppCompatActivity(),SensorEventListener {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION),
-                REQUEST_LOCATION_PERMISSION)
+                REQUEST_LOCATION_PERMISSION
+            )
             return
         }
 

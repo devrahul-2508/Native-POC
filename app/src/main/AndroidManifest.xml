@@ -27,7 +27,7 @@
         android:theme="@style/Theme.NativePOC"
         tools:targetApi="31">
         <activity
-            android:name=".BLEActivity"
+            android:name=".ui.BLEActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

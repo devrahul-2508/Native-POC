@@ -1,8 +1,8 @@
 @file:Suppress("DEPRECATION")
 
-package com.example.nativepoc
+package com.example.nativepoc.ui
 
-import BluetoothScanner
+import BluetoothService
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
@@ -22,8 +22,9 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.nativepoc.R
 import com.example.nativepoc.constants.Constants
-import java.util.UUID
+import com.example.nativepoc.controller.BluetoothController
 
 
 class BLEActivity : AppCompatActivity() {
@@ -31,7 +32,7 @@ class BLEActivity : AppCompatActivity() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothGatt: BluetoothGatt? = null
 
-    private var bluetoothScanner: BluetoothScanner? = null
+    private var bluetoothController: BluetoothController? = null
 
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
@@ -59,9 +60,9 @@ class BLEActivity : AppCompatActivity() {
 
                 if (deviceName.contains("Altor Helmet")) {
                     Log.d(TAG, deviceName)
-                    bluetoothScanner!!.stopScan()
+                    bluetoothController!!.stopScan()
 
-                    bluetoothScanner!!.connectToDevice(deviceAddress)
+                    bluetoothController!!.connectToDevice(deviceAddress)
                 }
                 println("Found BLE Device: $deviceName ($deviceAddress)")
             }
@@ -81,8 +82,8 @@ class BLEActivity : AppCompatActivity() {
                     BluetoothProfile.STATE_CONNECTED -> {
                         Log.d(TAG, "State Connected")
                         if (gatt != null) {
-                            bluetoothScanner?.setBluetoothGatt(gatt)
-                            bluetoothScanner?.discoverServices()
+                            bluetoothController?.setBluetoothGatt(gatt)
+                            bluetoothController?.discoverServices()
                         }
 
                     }
@@ -91,7 +92,7 @@ class BLEActivity : AppCompatActivity() {
                         // We successfully disconnected on our own request
                         Log.d(TAG, "Disconnected")
 
-                        bluetoothScanner?.disconnectDevice()
+                        bluetoothController?.disconnectDevice()
                     }
 
                     BluetoothProfile.STATE_CONNECTING -> {
@@ -110,47 +111,20 @@ class BLEActivity : AppCompatActivity() {
 
             override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    for (gattService: BluetoothGattService in gatt!!.services) {
-                        Log.d(TAG, "Service Name Found: " + gattService.uuid.toString())
-                    }
 
-                    val service = gatt.getService(Constants.SENSOR_SERVICE_UUID)
-                    Log.d("BAM SERVICE", service.toString())
+                    if (bluetoothController != null) {
 
-                    for (gattCharacteristic in service.characteristics) {
+                        val result = bluetoothController?.writeAppConnect()
 
-                        Log.d(
-                            "BAM Characteristics",
-                            "Characteristic Name Found: " + gattCharacteristic.uuid.toString()
-                        )
+                        if(result == true){
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                if(bluetoothController?.getSystemFlags() == true)
+                                        bluetoothController?.getMpuAccelerometerData()
 
-
-                    }
-                    val characteristic =
-                        service?.getCharacteristic(Constants.MPU_ACCELEROMETER_UUID)
-                    characteristic?.let {
-                        val data = "qwerty12"
+                            },300L)
+                        }
 
 
-                        // For App Connect
-                        bluetoothScanner?.writeCharacteristic(
-                            Constants.DIAGNOSTIC_SERVICE_UUID,
-                            Constants.APP_CONNECT_UUID,
-                            data.toByteArray(Charsets.UTF_8)
-                        )
-
-                        //Wait for App-Connect to be successful and then listen on data
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            bluetoothScanner?.enableCharacteristicNotification(
-                                Constants
-                                    .SENSOR_SERVICE_UUID,
-                                Constants.MPU_ACCELEROMETER_UUID,
-                                Constants.DESCRIPTOR_UUID
-                            )
-                        }, 300L)
-
-
-                        // bluetoothScanner?.readCharacteristic(SERVICE_UUID, CHARACTERISTIC_UUID)
                     }
 
 
@@ -200,20 +174,27 @@ class BLEActivity : AppCompatActivity() {
                 characteristic: BluetoothGattCharacteristic,
                 value: ByteArray
             ) {
+
+                if(Constants.SYSTEM_FLAGS_UUID == characteristic.uuid){
+                    val newValue = characteristic.value
+
+                    Log.d("BAM System Flag Values", newValue.contentToString())
+                }
                 if (Constants.MPU_ACCELEROMETER_UUID == characteristic.uuid) {
                     // Retrieve the new value of the characteristic
                     val newValue = characteristic.value
 
-                    Log.d("BAM System Flag Values", newValue.contentToString())
+                    Log.d("BAM Accelerometer Values", newValue.contentToString())
 
                     // Process the new value as needed
                 }
+
             }
 
 
         }
 
-        bluetoothScanner = BluetoothScanner(this, scanCallback, gattCallback)
+        bluetoothController = BluetoothController(this, scanCallback, gattCallback)
 
 
         if (ContextCompat.checkSelfPermission(
@@ -242,7 +223,7 @@ class BLEActivity : AppCompatActivity() {
             } else {
                 // startBleScan
 
-                bluetoothScanner!!.startScan()
+                bluetoothController!!.startScan()
 
             }
         }
@@ -255,7 +236,7 @@ class BLEActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_BLE_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                bluetoothScanner?.startScan()
+                bluetoothController?.startScan()
             } else {
                 println("Location permission denied")
             }
