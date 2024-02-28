@@ -113,16 +113,12 @@ class BLEActivity : AppCompatActivity() {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
 
                     if (bluetoothController != null) {
+                        bluetoothController?.writeAppConnect()
 
-                        val result = bluetoothController?.writeAppConnect()
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            bluetoothController?.getSystemFlags()
 
-                        if(result == true){
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                if(bluetoothController?.getSystemFlags() == true)
-                                        bluetoothController?.getMpuAccelerometerData()
-
-                            },300L)
-                        }
+                        }, 300L)
 
 
                     }
@@ -175,7 +171,7 @@ class BLEActivity : AppCompatActivity() {
                 value: ByteArray
             ) {
 
-                if(Constants.SYSTEM_FLAGS_UUID == characteristic.uuid){
+                if (Constants.SYSTEM_FLAGS_UUID == characteristic.uuid) {
                     val newValue = characteristic.value
 
                     Log.d("BAM System Flag Values", newValue.contentToString())
